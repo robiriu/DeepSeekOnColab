@@ -1,4 +1,23 @@
+# Dependency directories
 node_modules/
+
+# Build files
 .next/
+out/
+
+# Environment variables
 .env.local
+.env*.local
+
+# Vercel files
 .vercel/
+
+# System files
+.DS_Store
+
+# Logs
+*.log
+
+# Editor directories and files
+.vscode/
+.idea/
