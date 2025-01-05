@@ -68,19 +68,25 @@ export default function Home() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.headerText}>ForceX AI Chat</h1>
-        <a
-          href="https://github.com/robiriu/DeepSeekOnColab"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.githubLink}
-        >
+        <div style={styles.logoContainer}>
+          <a
+            href="https://github.com/robiriu/DeepSeekOnColab"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img
+              src="/github-logo.png"
+              alt="GitHub Logo"
+              style={styles.githubLogo}
+            />
+          </a>
           <img
-            src="/github-logo.png"
-            alt="GitHub Logo"
-            style={styles.githubLogo}
+            src="/ForceX-logo.png"
+            alt="ForceX Logo"
+            style={styles.forceXLogo}
           />
-        </a>
+        </div>
+        <h1 style={styles.headerText}>ForceX AI Chat</h1>
       </header>
 
       <div ref={chatContainerRef} style={styles.chatContainer}>
@@ -135,17 +141,27 @@ const styles = {
     backgroundColor: '#ffffff',
     borderBottom: '1px solid #ddd',
   },
-  headerText: {
-    fontSize: '28px',
-    fontWeight: 'bold',
-    color: '#4a90e2',
-  },
-  githubLink: {
-    textDecoration: 'none',
+  logoContainer: {
+    display: 'flex',
+    gap: '15px',
+    alignItems: 'center',
   },
   githubLogo: {
     height: '32px',
     width: '32px',
+    cursor: 'pointer',
+  },
+  forceXLogo: {
+    height: '48px', // Increased size for ForceX logo
+    width: '48px', // Maintains aspect ratio
+    cursor: 'pointer',
+  },
+  headerText: {
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#4a90e2',
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   chatContainer: {
     flex: 1,
