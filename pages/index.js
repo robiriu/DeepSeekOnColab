@@ -1,22 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
   const [input, setInput] = useState('');
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef(null);
+
+  // Auto-focus on input field for every interaction
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     // Add user input to conversation
-    const newConversation = [...conversation, { sender: 'User', message: input }];
-    setConversation(newConversation);
+    setConversation((prevConversation) => [
+      ...prevConversation,
+      { sender: 'User', message: input },
+    ]);
 
     setLoading(true);
 
     try {
-      // Fetch the response from the API
       const response = await fetch('/api/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -25,7 +34,7 @@ export default function Home() {
 
       const data = await response.json();
 
-      // Add the AI response to conversation
+      // Add AI response to conversation
       setConversation((prevConversation) => [
         ...prevConversation,
         { sender: 'AI', message: data.result || 'Error generating response.' },
@@ -52,15 +61,22 @@ export default function Home() {
         {conversation.map((entry, index) => (
           <div
             key={index}
-            style={entry.sender === 'User' ? styles.userMessage : styles.aiMessage}
+            style={
+              entry.sender === 'User' ? styles.userMessageContainer : styles.aiMessageContainer
+            }
           >
-            <strong>{entry.sender}:</strong> {entry.message}
+            <div
+              style={entry.sender === 'User' ? styles.userMessage : styles.aiMessage}
+            >
+              <strong>{entry.sender}:</strong> {entry.message}
+            </div>
           </div>
         ))}
       </div>
 
       <form onSubmit={handleSubmit} style={styles.inputContainer}>
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -78,13 +94,78 @@ export default function Home() {
 }
 
 const styles = {
-  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#1e1e2f', color: '#c9d1d9' },
-  header: { textAlign: 'center', padding: '20px', backgroundColor: '#202123' },
-  headerText: { fontSize: '28px', fontWeight: 'bold', color: '#58a6ff' },
-  chatContainer: { flex: 1, padding: '16px', overflowY: 'auto', backgroundColor: '#2e2e3d', borderRadius: '8px' },
-  userMessage: { textAlign: 'right', marginBottom: '12px', color: '#58a6ff' },
-  aiMessage: { textAlign: 'left', marginBottom: '12px', color: '#c9d1d9' },
-  inputContainer: { display: 'flex', gap: '8px', padding: '16px', backgroundColor: '#202123', borderTop: '1px solid #444' },
-  input: { flex: 1, padding: '12px', fontSize: '16px', borderRadius: '50px', border: '1px solid #444', backgroundColor: '#2e2e3d', color: '#ffffff' },
-  button: { padding: '12px 24px', backgroundColor: '#58a6ff', color: '#ffffff', borderRadius: '50px', border: 'none', cursor: 'pointer' },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    backgroundColor: '#1e1e2f',
+    color: '#c9d1d9',
+  },
+  header: {
+    textAlign: 'center',
+    padding: '20px',
+    backgroundColor: '#202123',
+  },
+  headerText: {
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#58a6ff',
+  },
+  chatContainer: {
+    flex: 1,
+    padding: '16px',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  userMessageContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  aiMessageContainer: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+  },
+  userMessage: {
+    backgroundColor: '#4a90e2',
+    color: '#ffffff',
+    padding: '10px 15px',
+    borderRadius: '15px',
+    maxWidth: '70%',
+    wordWrap: 'break-word',
+  },
+  aiMessage: {
+    backgroundColor: '#444',
+    color: '#ffffff',
+    padding: '10px 15px',
+    borderRadius: '15px',
+    maxWidth: '70%',
+    wordWrap: 'break-word',
+  },
+  inputContainer: {
+    display: 'flex',
+    gap: '8px',
+    padding: '16px',
+    backgroundColor: '#202123',
+    borderTop: '1px solid #444',
+  },
+  input: {
+    flex: 1,
+    padding: '12px',
+    fontSize: '16px',
+    borderRadius: '50px',
+    border: '1px solid #444',
+    backgroundColor: '#2e2e3d',
+    color: '#ffffff',
+  },
+  button: {
+    padding: '12px 24px',
+    backgroundColor: '#58a6ff',
+    color: '#ffffff',
+    borderRadius: '50px',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+  },
 };
