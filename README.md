@@ -26,3 +26,10 @@ Before running this project, ensure the following:
    ```bash
    git clone https://github.com/robiriu/DeepSeekOnColab.git
    cd DeepSeekOnColab
+
+2. Install dependencies:
+    npm install
+
+3. Create a .env.local file in the root directory and add your Hugging Face API token:
+    HF_API_TOKEN=your_huggingface_api_token
+
