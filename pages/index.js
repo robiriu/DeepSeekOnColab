@@ -9,11 +9,23 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate a backend API call with mock data
-    setTimeout(() => {
-      setResult(`You entered: ${input}`);
+    try {
+      // Call the backend API
+      const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input }),
+      });
+      const data = await response.json();
+
+      // Set the result from the API response
+      setResult(data.result);
+    } catch (error) {
+      console.error('Error:', error);
+      setResult('An error occurred. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1000); // Simulate a 1-second delay
+    }
   };
 
   return (
