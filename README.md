@@ -35,3 +35,5 @@ Before running this project, ensure the following:
     ```bash
     HF_API_TOKEN=your_huggingface_api_token
 
+I also deploy it on Vercel : https://deep-seek-on-colab.vercel.app/
+
