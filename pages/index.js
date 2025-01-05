@@ -1,105 +1,64 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [results, setResults] = useState({
-    gpt2: '',
-    gptNeo: '',
-    falcon: '',
-    llama: '',
-    mistral: '',
-  });
+  const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  // Scroll to the bottom of the chat when new results are added
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [results]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return; // Prevent empty messages
+    if (!input.trim()) return;
+
+    // Add user input to conversation
+    const newConversation = [...conversation, { sender: 'User', message: input }];
+    setConversation(newConversation);
 
     setLoading(true);
 
     try {
-      // Call the backend API for each model
-      const modelResponses = await Promise.all([
-        fetchModelResponse('gpt2', input),
-        fetchModelResponse('gpt-neo', input),
-        fetchModelResponse('falcon', input),
-        fetchModelResponse('llama', input),
-        fetchModelResponse('mistral', input),
-      ]);
-
-      // Update the results state
-      setResults({
-        gpt2: modelResponses[0],
-        gptNeo: modelResponses[1],
-        falcon: modelResponses[2],
-        llama: modelResponses[3],
-        mistral: modelResponses[4],
+      // Fetch the response from the API
+      const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input }),
       });
+
+      const data = await response.json();
+
+      // Add the AI response to conversation
+      setConversation((prevConversation) => [
+        ...prevConversation,
+        { sender: 'AI', message: data.result || 'Error generating response.' },
+      ]);
     } catch (error) {
       console.error('Error:', error);
-      setResults({
-        gpt2: 'Error',
-        gptNeo: 'Error',
-        falcon: 'Error',
-        llama: 'Error',
-        mistral: 'Error',
-      });
+      setConversation((prevConversation) => [
+        ...prevConversation,
+        { sender: 'AI', message: 'An error occurred while generating a response.' },
+      ]);
     } finally {
       setLoading(false);
-      setInput(''); // Clear the input field
+      setInput('');
     }
-  };
-
-  const fetchModelResponse = async (model, input) => {
-    const response = await fetch('/api/predict', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, input }),
-    });
-    const data = await response.json();
-    return data.result;
   };
 
   return (
     <div style={styles.container}>
-      {/* Header */}
       <header style={styles.header}>
         <h1 style={styles.headerText}>ForceX AI Chat</h1>
       </header>
 
-      {/* Output Columns */}
-      <div style={styles.columnsContainer}>
-        <div style={styles.column}>
-          <h3 style={styles.columnHeader}>GPT-2</h3>
-          <div style={styles.output}>{results.gpt2}</div>
-        </div>
-        <div style={styles.column}>
-          <h3 style={styles.columnHeader}>GPT-Neo</h3>
-          <div style={styles.output}>{results.gptNeo}</div>
-        </div>
-        <div style={styles.column}>
-          <h3 style={styles.columnHeader}>Falcon</h3>
-          <div style={styles.output}>{results.falcon}</div>
-        </div>
-        <div style={styles.column}>
-          <h3 style={styles.columnHeader}>LLaMA</h3>
-          <div style={styles.output}>{results.llama}</div>
-        </div>
-        <div style={styles.column}>
-          <h3 style={styles.columnHeader}>Mistral</h3>
-          <div style={styles.output}>{results.mistral}</div>
-        </div>
+      <div style={styles.chatContainer}>
+        {conversation.map((entry, index) => (
+          <div
+            key={index}
+            style={entry.sender === 'User' ? styles.userMessage : styles.aiMessage}
+          >
+            <strong>{entry.sender}:</strong> {entry.message}
+          </div>
+        ))}
       </div>
 
-      {/* Input Box */}
       <form onSubmit={handleSubmit} style={styles.inputContainer}>
         <input
           type="text"
@@ -111,86 +70,21 @@ export default function Home() {
           required
         />
         <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? 'Sending...' : 'Send'}
+          {loading ? 'Generating...' : 'Send'}
         </button>
       </form>
     </div>
   );
 }
 
-// Styles
 const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: '100vh',
-    backgroundColor: '#f5f5f5',
-    fontFamily: 'Arial, sans-serif',
-  },
-  header: {
-    backgroundColor: '#202123',
-    color: '#fff',
-    padding: '16px',
-    textAlign: 'center',
-  },
-  headerText: {
-    margin: 0,
-    fontSize: '24px',
-  },
-  columnsContainer: {
-    display: 'flex',
-    flex: 1,
-    padding: '16px',
-    gap: '16px',
-    overflowX: 'auto',
-    backgroundColor: '#fff',
-  },
-  column: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    border: '1px solid #e5e5e5',
-    borderRadius: '8px',
-    padding: '16px',
-    backgroundColor: '#f9f9f9',
-  },
-  columnHeader: {
-    margin: 0,
-    fontSize: '18px',
-    textAlign: 'center',
-    marginBottom: '12px',
-  },
-  output: {
-    flex: 1,
-    padding: '12px',
-    backgroundColor: '#fff',
-    border: '1px solid #e5e5e5',
-    borderRadius: '8px',
-    overflowY: 'auto',
-    fontSize: '14px',
-    lineHeight: '1.5',
-  },
-  inputContainer: {
-    display: 'flex',
-    padding: '16px',
-    backgroundColor: '#fff',
-    borderTop: '1px solid #e5e5e5',
-  },
-  input: {
-    flex: 1,
-    padding: '12px',
-    fontSize: '16px',
-    borderRadius: '8px',
-    border: '1px solid #e5e5e5',
-    marginRight: '8px',
-  },
-  button: {
-    padding: '12px 24px',
-    fontSize: '16px',
-    backgroundColor: '#202123',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-  },
+  container: { display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#1e1e2f', color: '#c9d1d9' },
+  header: { textAlign: 'center', padding: '20px', backgroundColor: '#202123' },
+  headerText: { fontSize: '28px', fontWeight: 'bold', color: '#58a6ff' },
+  chatContainer: { flex: 1, padding: '16px', overflowY: 'auto', backgroundColor: '#2e2e3d', borderRadius: '8px' },
+  userMessage: { textAlign: 'right', marginBottom: '12px', color: '#58a6ff' },
+  aiMessage: { textAlign: 'left', marginBottom: '12px', color: '#c9d1d9' },
+  inputContainer: { display: 'flex', gap: '8px', padding: '16px', backgroundColor: '#202123', borderTop: '1px solid #444' },
+  input: { flex: 1, padding: '12px', fontSize: '16px', borderRadius: '50px', border: '1px solid #444', backgroundColor: '#2e2e3d', color: '#ffffff' },
+  button: { padding: '12px 24px', backgroundColor: '#58a6ff', color: '#ffffff', borderRadius: '50px', border: 'none', cursor: 'pointer' },
 };
