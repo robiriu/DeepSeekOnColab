@@ -21,3 +21,6 @@ out/
 # Editor directories and files
 .vscode/
 .idea/
+
+# HF_API_TOKEN
+.env.local
