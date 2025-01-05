@@ -5,13 +5,27 @@ export default function Home() {
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
+  const chatContainerRef = useRef(null); // Ref for autoscrolling
 
-  // Auto-focus on input field for every interaction
-  useEffect(() => {
+  // Function to always focus the input field
+  const focusInput = () => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  });
+  };
+
+  // Function to scroll chat to the bottom
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
+  // Automatically focus the input field and scroll to the bottom when the conversation updates
+  useEffect(() => {
+    focusInput();
+    scrollToBottom();
+  }, [conversation]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,9 +69,21 @@ export default function Home() {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1 style={styles.headerText}>ForceX AI Chat</h1>
+        <a
+          href="https://github.com/robiriu/DeepSeekOnColab"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.githubLink}
+        >
+          <img
+            src="/github-logo.png"
+            alt="GitHub Logo"
+            style={styles.githubLogo}
+          />
+        </a>
       </header>
 
-      <div style={styles.chatContainer}>
+      <div ref={chatContainerRef} style={styles.chatContainer}>
         {conversation.map((entry, index) => (
           <div
             key={index}
@@ -98,18 +124,28 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
-    backgroundColor: '#1e1e2f',
-    color: '#c9d1d9',
+    backgroundColor: '#f7f7f7',
+    color: '#333',
   },
   header: {
-    textAlign: 'center',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: '20px',
-    backgroundColor: '#202123',
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #ddd',
   },
   headerText: {
     fontSize: '28px',
     fontWeight: 'bold',
-    color: '#58a6ff',
+    color: '#4a90e2',
+  },
+  githubLink: {
+    textDecoration: 'none',
+  },
+  githubLogo: {
+    height: '32px',
+    width: '32px',
   },
   chatContainer: {
     flex: 1,
@@ -118,6 +154,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
+    backgroundColor: '#ffffff',
   },
   userMessageContainer: {
     display: 'flex',
@@ -128,44 +165,48 @@ const styles = {
     justifyContent: 'flex-start',
   },
   userMessage: {
-    backgroundColor: '#4a90e2',
-    color: '#ffffff',
+    backgroundColor: '#d1e7fd',
+    color: '#333',
     padding: '10px 15px',
     borderRadius: '15px',
     maxWidth: '70%',
     wordWrap: 'break-word',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   aiMessage: {
-    backgroundColor: '#444',
-    color: '#ffffff',
+    backgroundColor: '#f0f0f0',
+    color: '#333',
     padding: '10px 15px',
     borderRadius: '15px',
     maxWidth: '70%',
     wordWrap: 'break-word',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   inputContainer: {
     display: 'flex',
     gap: '8px',
     padding: '16px',
-    backgroundColor: '#202123',
-    borderTop: '1px solid #444',
+    backgroundColor: '#ffffff',
+    borderTop: '1px solid #ddd',
   },
   input: {
     flex: 1,
     padding: '12px',
     fontSize: '16px',
-    borderRadius: '50px',
-    border: '1px solid #444',
-    backgroundColor: '#2e2e3d',
-    color: '#ffffff',
+    borderRadius: '25px',
+    border: '1px solid #ccc',
+    backgroundColor: '#ffffff',
+    color: '#333',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   },
   button: {
     padding: '12px 24px',
-    backgroundColor: '#58a6ff',
+    backgroundColor: '#4a90e2',
     color: '#ffffff',
-    borderRadius: '50px',
+    borderRadius: '25px',
     border: 'none',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+    transition: 'background-color 0.3s ease',
   },
 };
