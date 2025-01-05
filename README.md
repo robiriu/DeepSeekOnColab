@@ -28,8 +28,10 @@ Before running this project, ensure the following:
    cd DeepSeekOnColab
 
 2. Install dependencies:
+    ```bash
     npm install
 
 3. Create a .env.local file in the root directory and add your Hugging Face API token:
+    ```bash
     HF_API_TOKEN=your_huggingface_api_token
 
