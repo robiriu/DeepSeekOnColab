@@ -1,19 +1,30 @@
 import { HfInference } from '@huggingface/inference';
 
+const hf = new HfInference(process.env.HF_API_TOKEN);
+
+const models = {
+  gpt2: 'gpt2',
+  'gpt-neo': 'EleutherAI/gpt-neo-1.3B',
+  falcon: 'tiiuae/falcon-7b-instruct',
+  llama: 'decapoda-research/llama-7b-hf',
+  mistral: 'mistralai/Mistral-7B-v0.1',
+};
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    const { input } = req.body;
+    const { model, input } = req.body;
 
+    console.log('Model:', model); // Log the model
     console.log('Input:', input); // Log the input
-    console.log('HF API Token:', process.env.HF_API_TOKEN); // Log the token
 
     try {
-      const hf = new HfInference(process.env.HF_API_TOKEN);
+      // Use the specified model for text generation
       const response = await hf.textGeneration({
-        model: 'gpt2', // Replace with your preferred model
-        inputs: `You are a helpful assistant. The user says: "${input}". Respond concisely:`,
+        model: models[model],
+        inputs: `You are a helpful AI assistant. The user says: "${input}". Respond helpfully:`,
         parameters: {
-          max_length: 50, // Limit the response length
+          max_length: 100,
+          temperature: 0.7,
         },
       });
 
