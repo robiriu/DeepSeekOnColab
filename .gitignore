@@ -24,3 +24,5 @@ out/
 
 # HF_API_TOKEN
 .env.local
+# Forge configuration
+forge.yaml

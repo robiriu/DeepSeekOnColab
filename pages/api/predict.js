@@ -1,10 +1,4 @@
-import { HfInference } from '@huggingface/inference';
-
-const hf = new HfInference(process.env.HF_API_TOKEN);
-
-// Use the Mistral 7B model
-const model = 'mistralai/Mistral-7B-v0.1';
-
+// Groq API - Fast and free LLM service
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { input } = req.body;
@@ -14,34 +8,52 @@ export default async function handler(req, res) {
     }
 
     try {
-      // Generate a response using Hugging Face API
-      const response = await hf.textGeneration({
-        model,
-        inputs: input, // Send only the user's input
-        parameters: {
-          max_length: 100,         // Limit response length
-          temperature: 0.7,        // Control randomness
-          top_k: 50,               // Encourage diversity
-          top_p: 0.9,              // Nucleus sampling
-          repetition_penalty: 1.2, // Penalize repetition
+      // Groq API call
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          model: 'mixtral-8x7b-32768', // Free model with 32k context
+          messages: [
+            {
+              role: 'system',
+              content: 'You are ForceX AI, a helpful and intelligent assistant. Provide clear, concise, and helpful responses.'
+            },
+            {
+              role: 'user',
+              content: input
+            }
+          ],
+          max_tokens: 1024,
+          temperature: 0.7,
+          top_p: 0.9,
+        }),
       });
 
-      // Extract and clean the generated response
-      const result = response.generated_text;
+      const data = await response.json();
 
-      // Post-process the output to remove unnecessary boilerplate text
-      const cleanedResult = result.replace(/The user says:.*?Respond.*?:/gi, '').trim();
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'API request failed');
+      }
 
-      // Return only the cleaned response
-      res.status(200).json({ result: cleanedResult });
+      const result = data.choices[0]?.message?.content || 'Sorry, I couldn\'t generate a response.';
+
+      res.status(200).json({ result });
     } catch (error) {
-      console.error('Error in API:', error.message || error);
+      console.error('Groq API error:', error);
 
-      // Return an appropriate error message
-      res.status(500).json({
-        result: `An error occurred: ${error.message || 'Unknown error.'}`,
-      });
+      let errorMessage = 'I\'m having trouble responding right now. Please try again.';
+      
+      if (error.message?.includes('rate limit')) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (error.message?.includes('API key')) {
+        errorMessage = 'API configuration issue. Please check the setup.';
+      }
+
+      res.status(500).json({ result: errorMessage });
     }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
