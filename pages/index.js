@@ -10,6 +10,101 @@ export default function Home() {
   const inputRef = useRef(null);
   const chatContainerRef = useRef(null);
 
+  // LocalStorage keys
+  const STORAGE_KEYS = {
+    CONVERSATIONS: 'forcex_conversations',
+    CHAT_SESSIONS: 'forcex_chat_sessions',
+    CURRENT_CHAT_ID: 'forcex_current_chat_id',
+    SIDEBAR_OPEN: 'forcex_sidebar_open'
+  };
+
+  // Save data to localStorage with error handling
+  const saveToStorage = (key, data) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.warn('Failed to save to localStorage:', error);
+    }
+  };
+
+  // Load data from localStorage with error handling
+  const loadFromStorage = (key, defaultValue = null) => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Convert date strings back to Date objects for conversations
+        if (key === STORAGE_KEYS.CONVERSATIONS && Array.isArray(parsed)) {
+          return parsed.map(chat => ({
+            ...chat,
+            createdAt: new Date(chat.createdAt),
+            lastMessage: chat.lastMessage ? new Date(chat.lastMessage) : null
+          }));
+        }
+        // Convert date strings back to Date objects for chat sessions
+        if (key === STORAGE_KEYS.CHAT_SESSIONS && typeof parsed === 'object') {
+          const sessions = {};
+          Object.keys(parsed).forEach(chatId => {
+            sessions[chatId] = parsed[chatId].map(message => ({
+              ...message,
+              timestamp: new Date(message.timestamp)
+            }));
+          });
+          return sessions;
+        }
+        return parsed;
+      }
+    } catch (error) {
+      console.warn('Failed to load from localStorage:', error);
+    }
+    return defaultValue;
+  };
+
+  // Load saved data on component mount
+  useEffect(() => {
+    const savedConversations = loadFromStorage(STORAGE_KEYS.CONVERSATIONS, []);
+    const savedChatSessions = loadFromStorage(STORAGE_KEYS.CHAT_SESSIONS, {});
+    const savedCurrentChatId = loadFromStorage(STORAGE_KEYS.CURRENT_CHAT_ID);
+    const savedSidebarOpen = loadFromStorage(STORAGE_KEYS.SIDEBAR_OPEN, true);
+
+    setConversations(savedConversations);
+    setChatSessions(savedChatSessions);
+    setSidebarOpen(savedSidebarOpen);
+
+    // Set current chat ID if valid, otherwise create new chat
+    if (savedCurrentChatId && savedConversations.find(chat => chat.id === savedCurrentChatId)) {
+      setCurrentChatId(savedCurrentChatId);
+    } else if (savedConversations.length > 0) {
+      setCurrentChatId(savedConversations[0].id);
+    } else {
+      // Will create new chat in the next useEffect
+    }
+  }, []);
+
+  // Save conversations to localStorage whenever they change
+  useEffect(() => {
+    if (conversations.length > 0) {
+      saveToStorage(STORAGE_KEYS.CONVERSATIONS, conversations);
+    }
+  }, [conversations]);
+
+  // Save chat sessions to localStorage whenever they change
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.CHAT_SESSIONS, chatSessions);
+  }, [chatSessions]);
+
+  // Save current chat ID to localStorage whenever it changes
+  useEffect(() => {
+    if (currentChatId) {
+      saveToStorage(STORAGE_KEYS.CURRENT_CHAT_ID, currentChatId);
+    }
+  }, [currentChatId]);
+
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.SIDEBAR_OPEN, sidebarOpen);
+  }, [sidebarOpen]);
+
   // Get current conversation
   const currentConversation = currentChatId ? chatSessions[currentChatId] || [] : [];
 
@@ -66,29 +161,51 @@ export default function Home() {
   // Delete chat session
   const deleteChat = (chatId, e) => {
     e.stopPropagation();
-    setConversations(prev => prev.filter(chat => chat.id !== chatId));
-    setChatSessions(prev => {
-      const newSessions = { ...prev };
-      delete newSessions[chatId];
-      return newSessions;
-    });
+    const updatedConversations = conversations.filter(chat => chat.id !== chatId);
+    const updatedSessions = { ...chatSessions };
+    delete updatedSessions[chatId];
+    
+    setConversations(updatedConversations);
+    setChatSessions(updatedSessions);
     
     if (currentChatId === chatId) {
-      const remainingChats = conversations.filter(chat => chat.id !== chatId);
-      if (remainingChats.length > 0) {
-        setCurrentChatId(remainingChats[0].id);
+      if (updatedConversations.length > 0) {
+        setCurrentChatId(updatedConversations[0].id);
       } else {
-        createNewChat();
+        // Will create new chat automatically
+        setCurrentChatId(null);
       }
     }
   };
 
   // Initialize first chat on load
   useEffect(() => {
-    if (conversations.length === 0) {
+    if (conversations.length === 0 && !currentChatId) {
       createNewChat();
     }
-  }, []);
+  }, [conversations.length, currentChatId]);
+
+  // Clean up old chats to prevent localStorage overflow (keep last 50 chats)
+  useEffect(() => {
+    if (conversations.length > 50) {
+      const sortedConversations = [...conversations].sort((a, b) => 
+        new Date(b.lastMessage || b.createdAt) - new Date(a.lastMessage || a.createdAt)
+      );
+      const keptConversations = sortedConversations.slice(0, 50);
+      const removedChatIds = conversations
+        .filter(chat => !keptConversations.find(kept => kept.id === chat.id))
+        .map(chat => chat.id);
+      
+      // Remove old chat sessions
+      const updatedSessions = { ...chatSessions };
+      removedChatIds.forEach(chatId => {
+        delete updatedSessions[chatId];
+      });
+      
+      setConversations(keptConversations);
+      setChatSessions(updatedSessions);
+    }
+  }, [conversations.length]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
