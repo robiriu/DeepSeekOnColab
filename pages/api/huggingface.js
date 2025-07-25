@@ -16,7 +16,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3-8b-8192', // Alternative Groq model that's definitely available
+          model: 'llama-3.1-8b-instant', // Fast alternative model with large context
           messages: [
             {
               role: 'system',

@@ -16,7 +16,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'mixtral-8x7b-32768', // Free model with 32k context
+          model: 'llama-3.3-70b-versatile', // Updated to newer, more capable model
           messages: [
             {
               role: 'system',
