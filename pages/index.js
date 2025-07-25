@@ -214,8 +214,10 @@ export default function Home() {
     const userMessage = input.trim();
     setInput('');
 
-    // Update current chat session
+    // Create user message object
     const newMessage = { sender: 'User', message: userMessage, timestamp: new Date() };
+    
+    // Add user message to current chat session
     setChatSessions(prev => ({
       ...prev,
       [currentChatId]: [...(prev[currentChatId] || []), newMessage]
@@ -257,7 +259,7 @@ export default function Home() {
         data = await response.json();
       }
 
-      // Add AI response to current chat session
+      // Add AI response to current chat session (user message already added)
       const aiMessage = { 
         sender: 'AI', 
         message: data.result || 'I apologize, but I\'m having trouble responding right now. Please try again.',
@@ -266,7 +268,7 @@ export default function Home() {
 
       setChatSessions(prev => ({
         ...prev,
-        [currentChatId]: [...(prev[currentChatId] || []), newMessage, aiMessage]
+        [currentChatId]: [...(prev[currentChatId] || []), aiMessage]
       }));
 
     } catch (error) {
@@ -279,7 +281,7 @@ export default function Home() {
 
       setChatSessions(prev => ({
         ...prev,
-        [currentChatId]: [...(prev[currentChatId] || []), newMessage, errorMessage]
+        [currentChatId]: [...(prev[currentChatId] || []), errorMessage]
       }));
     } finally {
       setLoading(false);
